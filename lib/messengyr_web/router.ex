@@ -16,6 +16,10 @@ defmodule MessengyrWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+
+    plug :fetch_session
+    plug Guardian.Plug.VerifySession
+    plug Guardian.Plug.LoadResource
   end
 
   scope "/", MessengyrWeb do
@@ -29,6 +33,13 @@ defmodule MessengyrWeb.Router do
     get "/logout", PageController, :logout
 
     get "/messages", ChatController, :index
+  end
+
+  scope "/api", MessengyrWeb do
+    pipe_through :api
+
+    resources "/users", UserController, only: [:show]
+    resources "/rooms", RoomController
   end
 
   # Other scopes may use custom stacks.
