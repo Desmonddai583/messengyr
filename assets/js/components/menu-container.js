@@ -3,7 +3,57 @@ import ReactDOM from 'react-dom';
 
 import MenuMessage from './menu-message';
 
+import { connect } from 'react-redux';
+import { setRooms, selectRoom } from '../actions';
+
 class MenuContainer extends React.Component {
+  componentDidMount() {
+    fetch('/api/rooms', {
+      headers: {
+        "Authorization": "Bearer " + window.jwtToken,
+      },
+    })
+    .then((response) => {
+      return response.json()
+    })
+    .then((response) => {
+      let rooms = response.rooms;
+      this.props.setRooms(rooms);
+
+      let firstRoom = rooms[0];
+      if (firstRoom) {
+        this.props.selectRoom(firstRoom.id);
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  }
+
+  createRoom() {
+    let username = prompt("Enter a username");
+
+    let data = new FormData();
+    data.append("counterpartUsername", username);
+
+    fetch('/api/rooms', {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + window.jwtToken,
+      },
+      body: data,
+    })
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  }
+
   render() {
     let rooms = this.props.rooms.map((room) => {
       return (
@@ -18,7 +68,12 @@ class MenuContainer extends React.Component {
 
         <div className="header">
           <h3>Messages</h3>
-          <button className="compose"></button>
+      
+          <button 
+            className="compose"
+            onClick={this.createRoom}
+          ></button>
+      
         </div>
 
         <ul>
@@ -33,5 +88,21 @@ class MenuContainer extends React.Component {
 MenuContainer.defaultProps = {
   rooms: [],
 };
+
+const mapStateToProps = (state) => {
+  return {
+    rooms: state,
+  };
+};
+
+const mapDispatchToProps = {
+  setRooms,
+  selectRoom,
+};
+
+MenuContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(MenuContainer);
 
 export default MenuContainer;
