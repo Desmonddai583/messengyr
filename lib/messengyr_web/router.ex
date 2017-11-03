@@ -38,6 +38,7 @@ defmodule MessengyrWeb.Router do
 
     resources "/users", UserController, only: [:show]
     resources "/rooms", RoomController
+    resources "/messages", MessageController, only: [:show]
   end
 
   # Other scopes may use custom stacks.

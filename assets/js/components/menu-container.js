@@ -4,7 +4,22 @@ import ReactDOM from 'react-dom';
 import MenuMessage from './menu-message';
 
 import { connect } from 'react-redux';
-import { setRooms, selectRoom } from '../actions';
+import { setRooms, selectRoom, addRoom, addMessage } from '../actions';
+import socket from '../socket';
+
+let getRoomChannel = (roomId) => {
+  let channel = socket.channel(`room:${roomId}`);
+
+  channel.join()
+  .receive("ok", resp => {
+    console.info(`Joined room ${roomId} successfully`, resp);
+  })
+  .receive("error", resp => {
+    console.error(`Unable to join ${roomId}`, resp);
+  });
+
+  return channel;
+};
 
 class MenuContainer extends React.Component {
   componentDidMount() {
@@ -18,6 +33,12 @@ class MenuContainer extends React.Component {
     })
     .then((response) => {
       let rooms = response.rooms;
+
+      rooms.forEach((room) => {
+        room.channel = getRoomChannel(room.id);
+        this.listenToNewMessages(room);
+      });
+
       this.props.setRooms(rooms);
 
       let firstRoom = rooms[0];
@@ -27,6 +48,31 @@ class MenuContainer extends React.Component {
     })
     .catch((err) => {
       console.error(err);
+    });
+  }
+
+  getNewMessage(room, messageId) {
+    fetch(`/api/messages/${messageId}`, {
+      headers: {
+        "Authorization": "Bearer " + window.jwtToken,
+      },
+    })
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      this.props.addMessage(response.message, room.id);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  }
+
+  listenToNewMessages(room) {
+    room.channel.on('message:new', resp => {
+      let messageId = resp.messageId;
+
+      this.getNewMessage(room, messageId);
     });
   }
 
@@ -47,7 +93,8 @@ class MenuContainer extends React.Component {
       return response.json();
     })
     .then((response) => {
-      console.log(response);
+      let room = response.room;
+      this.props.addRoom(room);
     })
     .catch((err) => {
       console.error(err);
@@ -55,7 +102,23 @@ class MenuContainer extends React.Component {
   }
 
   render() {
-    let rooms = this.props.rooms.map((room) => {
+    let getRoomDate = (room) => {
+      let date;
+
+      if (room.lastMessage) {
+        date = room.lastMessage.sentAt;
+      } else {
+        date =  room.createdAt;
+      }
+
+      return new Date(date);
+    };
+
+    let rooms = this.props.rooms.sort((a, b) => {
+      return getRoomDate(b) - getRoomDate(a);
+    });
+
+    rooms = rooms.map((room) => {
       return (
         <MenuMessage
           key={room.id}
@@ -63,6 +126,7 @@ class MenuContainer extends React.Component {
         />
       );
     });
+
     return (
       <div className="menu">
 
@@ -71,7 +135,7 @@ class MenuContainer extends React.Component {
       
           <button 
             className="compose"
-            onClick={this.createRoom}
+            onClick={this.createRoom.bind(this)}
           ></button>
       
         </div>
@@ -98,6 +162,8 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = {
   setRooms,
   selectRoom,
+  addRoom,
+  addMessage,
 };
 
 MenuContainer = connect(

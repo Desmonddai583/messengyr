@@ -6,9 +6,26 @@ defmodule Messengyr.Chat do
   alias Messengyr.Repo
   alias Messengyr.Accounts.User
 
+  def get_room(id) do
+    Repo.get(Room, id)
+  end
+
   def create_room() do
     room = %Room{}
     Repo.insert(room)
+  end
+
+  def room_has_user?(room, user) do
+    # Find a row in the "room_users" table that contains
+    # the given room and user
+    query = from ru in RoomUser,
+      where: ru.room_id == ^room.id and ru.user_id == ^user.id
+
+    # If a room was found, return true!
+    case Repo.one(query) do
+      %RoomUser{} -> true
+      _ -> false
+    end
   end
 
   def list_rooms do
@@ -66,6 +83,10 @@ defmodule Messengyr.Chat do
       text: text,
     }
     Repo.insert(message)
+  end
+
+  def get_message(id) do
+    Repo.get(Message, id) |> Repo.preload(:room)
   end
 
 end
