@@ -43,6 +43,7 @@ defmodule Messengyr.Mixfile do
       {:cowboy, "~> 1.0"},
       {:comeonin, "~> 3.0"},
       {:guardian, "~> 0.14"},
+      {:ex_doc, "~> 0.14", only: :dev},
     ]
   end
 
