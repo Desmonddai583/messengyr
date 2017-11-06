@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :messengyr, Messengyr.Endpoint,
+config :messengyr, MessengyrWeb.Endpoint,
   load_from_system_env: true,
   url: [scheme: "https", host: "desmonddai583-messengyr.herokuapp.com", port: 443],
   force_ssl: [rewrite_on: [:x_forwarded_proto]],
