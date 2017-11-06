@@ -1,14 +1,11 @@
 use Mix.Config
 
 config :messengyr, Messengyr.Endpoint,
-  http: [port: {:system, "PORT"}],
-  root: ".",
-  server: true,
-  # Make sure your change the URL to your app's URL:
+  load_from_system_env: true,
   url: [scheme: "https", host: "desmonddai583-messengyr.herokuapp.com", port: 443],
   force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  cache_static_manifest: "priv/static/manifest.json",
-  secret_key_base: System.get_env("SECRET_KEY_BASE")
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  secret_key_base: Map.fetch!(System.get_env(), "SECRET_KEY_BASE")
 
 config :logger, level: :info
 
